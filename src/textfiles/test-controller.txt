@@ -1,0 +1,27 @@
+import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
+// Middleware to check if the user is logged in
+export const shouldBeLoggedIn = async (req: Request, res: Response): Promise<void> => {
+  console.log(req.userId); // Assuming userId is set in middleware
+  res.status(200).json({ message: "You are Authenticated" });
+};
+
+// Middleware to check if the user is an admin
+export const shouldBeAdmin = async (req: Request, res: Response): Promise<void> => {
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "Not Authenticated!" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET_KEY as string, (err, payload: any) => {
+    if (err) {
+      return res.status(403).json({ message: "Token is not Valid!" });
+    }
+
+    if (!payload?.isAdmin) {
+      return res.status(403).json({ message: "Not authorized!" });
+    }
+
+    res.status(200).json({

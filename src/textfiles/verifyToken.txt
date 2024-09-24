@@ -1,0 +1,29 @@
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+
+// Extend the Express Request interface to include userId
+interface AuthenticatedRequest extends Request {
+  userId?: string;
+}
+
+export const verifyToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "Not Authenticated!" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET_KEY as string, (err, payload) => {
+    if (err) {
+      return res.status(403).json({ message: "Token is not Valid!" });
+    }
+
+    if (payload && typeof payload.id === "string") {
+      req.userId = payload.id;
+    } else {
+      return res.status(403).json({ message: "Token is not Valid!" });
+    }
+
+    next();
+  });
+};
